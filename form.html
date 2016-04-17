@@ -1,0 +1,56 @@
+<div>
+	<block>
+		<h6>Отправьте запрос и мы вам перезвоним!</h6>
+		<p class="ok">Ваш запрос получен!<br>Мы свяжемся с вами в ближайшее время!</p>
+		<form class="formQuest" method='post' autocomplete="off">
+			<input type="text" name="name" placeholder="Ім'я:" pattern="[А-Яа-яA-Za-z]{3,30}" required>
+			<input type="tel" name="tel" placeholder="Телефон:" required>
+			<input type="hidden" name="form" value="Замовлення зворотнього звяку!">
+			<input type="submit" name="send" value="Відправити">
+		</form>
+		<a class="close"></a>
+	<block>
+</div>
+
+<script>
+	// ВІДПРАВКА ФОРМИ --------------------------------------------------------------
+    $(".formQuest").submit(function(){ // перехоплюємо все при події відправки
+		var form = $(this); // запишемо формулу, щоб потім не було проблем з this
+		var error = false; // попередньо помилок немає
+		form.find('input').each( function(){ // пробіжимо по кожному полю в формі
+			if ($(this).val() == '') { // якщо знаходимо порожнє
+				alert('Заповніть поле "'+$(this).attr('placeholder')+'"!'); // говоримо заповнюй!
+				error = true; // помилка
+			}
+		});
+		if (!error) { // якщо помилки немає
+			var data = form.serialize(); // готуємо дані
+			$.ajax({ // инициализируем ajax запит
+			   type: 'POST', // відправляємо в POST форматі, можна GET
+			   url: 'core/mail.php', // шлях до обробника, у нас він лежить в тій же папці
+			   dataType: 'json', // відповідь чекаємо в json форматі
+			   data: data, // дані для відправки
+		       beforeSend: function(data) { // подія до відправки
+		            form.find('input[type="submit"]').attr('disabled', 'disabled'); // наприклад, відключимо кнопку, щоб не тиснули по 100 раз
+		          },
+		       success: function(data){ // подія після вдалого звернення до сервера і отримання відповіді
+		       		if (data['error']) { // якщо обробник повернув помилку
+		       			alert(data['error']); // покажемо її текст
+		       		} else { // якщо все пройшло ок
+						$('.formQuest').trigger('reset'); // очищаємо поля форми
+						$('.ok').fadeIn(500).delay(5000).fadeOut(500);
+		       		}
+		         },
+		       error: function (xhr, ajaxOptions, thrownError) { // в разі невдалого завершення запиту до сервера
+		            alert(xhr.status); // покажемо відповідь сервера
+		            alert(thrownError); // і текст помилки
+		         },
+		       complete: function(data) { // подія після будь-якого результату
+		            form.find('input[type="submit"]').prop('disabled', false); // в будь-якому випадку включимо кнопку назад
+		         }
+		                  
+			     });
+		}
+		return false; // вирубаєм стандартне надсилання форми
+	});
+</script>
